@@ -1,9 +1,11 @@
 var express = require('express'),
-    redis   = require('redis'),
     pug = require('pug'),
     bodyParser = require('body-parser'),
-    publisherClient = redis.createClient();
+    events = require('events');
 
+var EventEmitter = events.EventEmitter;
+
+var msger = new EventEmitter;
 
 var app = express();
 
@@ -23,26 +25,20 @@ app.get('/', function(req, res){
 });
 
 app.get('/update-stream', function(req, res) {
+  console.log("now req stream");
   // let request last as long as possible
   req.socket.setTimeout(1200000);
 
-  var messageCount = 0;
-  var subscriber = redis.createClient();
-
-  subscriber.subscribe("updates");
-
-  // In case we encounter an error...print it out to the console
-  subscriber.on("error", function(err) {
-    console.log("Redis Error: " + err);
+  msger.on("question", function(){
+    console.log("Getting transmission on event");
   });
 
-  // When we receive a message from the redis connection
-  subscriber.on("message", function(channel, message) {
-    messageCount++; // Increment our message count
-
-    res.write('id: ' + messageCount + '\n');
-    res.write("data: " + message + '\n\n'); // Note the extra newline
-  });
+  req.on("close", function(){
+    console.log("stream req close");
+    msger.removeListener("question", function(){
+      console.log("Removing Listener");
+    })
+  })
 
   //send headers for event-stream connection
   res.writeHead(200, {
@@ -52,23 +48,37 @@ app.get('/update-stream', function(req, res) {
   });
   res.write('\n');
 
+  // When we receive a message from the redis connection
+  // subscriber.on("message", function(channel, message) {
+  //   var compile = pug.compileFile("views/"+message+".pug");
+  //   var wb = "data: " + compile() + "\n\n";
+  //   res.write(wb);
+    // messageCount++; // Increment our message count
+    // res.write('id: ' + messageCount + '\n');
+    // res.write("data: " + message + '\n\n'); // Note the extra newline
+  // });
+
+
   // The 'close' event is fired when a user closes their browser window.
   // In that situation we want to make sure our redis channel subscription
   // is properly shut down to prevent memory leaks...and incorrect subscriber
   // counts to the channel.
-  req.on("close", function() {
-    subscriber.unsubscribe();
-    subscriber.quit();
-  });
+  // req.on("close", function() {
+  //   subscriber.unsubscribe();
+  //   subscriber.quit();
+  // });
 });
 
-app.get('/fire-event/:event_name', function(req, res) {
-  console.log("publish", req.params.event_name);
-  publisherClient.publish( 'updates', ('"' + req.params.event_name + '" page visited') );
+app.get('/admin', function(req,res){
+  res.render('admin');
+})
+
+app.get('/events/:event', function(req,res){
+  msger.emit("question", req.params.event);
   res.writeHead(200, {'Content-Type': 'text/html'});
-  res.write('All clients have received "' + req.params.event_name + '"');
+  res.write(req.params.event + " Pushed to listeners");
   res.end();
-});
+})
 
 app.listen(8000);
 console.log("Express server listening on port 8000");
