@@ -1,10 +1,14 @@
 html
   head
-    title SSEs, Node.js, and Redis
+    meta(name="viewport", content="width=device-width, inital-scale=1")
+    title Votes
     link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css')
+    block head
+
   body
     .container
       block content
 
     script(src='https://code.jquery.com/jquery-3.1.1.min.js')
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js")
     block footscript

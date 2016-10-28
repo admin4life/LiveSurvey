@@ -1,8 +1,19 @@
 extends layout
 
+block head
+  link(rel='stylesheet', href="style.css")
+
 block content
   h1 Main Section
-  .content
+  #content
+    .row
+      .col-xs-12(data-bind="foreach: questions")
+        div(data-bind="attr: {id: id}")
+          h1(data-bind="text: head")
+          p(data-bind="text: question")
+          .btn-group-vertical(data-bind="foreach: opts")
+            .btn.btn-info.btn-lg(data-bind="text: text, click: function(data){ vote($parent,data)}")
+
 
 block footscript
   script(src='events.js')

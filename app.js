@@ -6,10 +6,18 @@ var express = require('express'),
 var EventEmitter = events.EventEmitter;
 
 var msger = new EventEmitter;
+var voter = new EventEmitter;
 
 var app = express();
 
-// Configuration
+var qs = [
+  {id: 'one', head: "Question One", question: "This is a question about UFO's and aliens",
+  opts: [
+    {text: "Yes", votes: 0},
+    {text: "No", votes: 0}
+  ]},
+
+]
 
 
 app.set('view engine', 'pug');
@@ -24,21 +32,18 @@ app.get('/', function(req, res){
   res.render('index');
 });
 
-app.get('/update-stream', function(req, res) {
-  console.log("now req stream");
+app.get('/questions', function(req, res){
+  res.json(qs);
+})
+
+var clients = 0;
+
+app.get('/clients', function(req, res) {
+  clients++;
+  console.log(clients+" clients connected to stream");
+
   // let request last as long as possible
   req.socket.setTimeout(1200000);
-
-  msger.on("question", function(){
-    console.log("Getting transmission on event");
-  });
-
-  req.on("close", function(){
-    console.log("stream req close");
-    msger.removeListener("question", function(){
-      console.log("Removing Listener");
-    })
-  })
 
   //send headers for event-stream connection
   res.writeHead(200, {
@@ -48,36 +53,57 @@ app.get('/update-stream', function(req, res) {
   });
   res.write('\n');
 
-  // When we receive a message from the redis connection
-  // subscriber.on("message", function(channel, message) {
-  //   var compile = pug.compileFile("views/"+message+".pug");
-  //   var wb = "data: " + compile() + "\n\n";
-  //   res.write(wb);
-    // messageCount++; // Increment our message count
-    // res.write('id: ' + messageCount + '\n');
-    // res.write("data: " + message + '\n\n'); // Note the extra newline
-  // });
+  function eventFunct(data){
+    res.write("data: "+data+"\n\n");
+  }
 
+  msger.on("question", eventFunct);
 
-  // The 'close' event is fired when a user closes their browser window.
-  // In that situation we want to make sure our redis channel subscription
-  // is properly shut down to prevent memory leaks...and incorrect subscriber
-  // counts to the channel.
-  // req.on("close", function() {
-  //   subscriber.unsubscribe();
-  //   subscriber.quit();
-  // });
+  //End the clients connection
+  req.on("close", function(){
+    clients--;
+    console.log(clients+" clients connected to stream");
+    msger.removeListener("question", eventFunct)
+  })
+
 });
 
 app.get('/admin', function(req,res){
   res.render('admin');
 })
 
-app.get('/events/:event', function(req,res){
+var votes;
+
+app.get('/question/:event', function(req,res){
   msger.emit("question", req.params.event);
+  var ind = qs.findIndex(a => a.id === req.params.event);
+  votes = qs[ind].opts;
+
   res.writeHead(200, {'Content-Type': 'text/html'});
-  res.write(req.params.event + " Pushed to listeners");
+
   res.end();
+})
+
+app.get('/adminEvent', function(req,res){
+  req.socket.setTimeout(1200000);
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  })
+  res.write('\n');
+
+  voter.on("vote", function(data){
+    var ind = votes.findIndex( a => a.text === data);
+    votes[ind].votes ++;
+    res.write("data: "+JSON.stringify(votes)+"\n\n");
+  })
+
+})
+app.post('/vote', function(req, res){
+  voter.emit("vote", req.body.text);
+  res.send(true);
 })
 
 app.listen(8000);

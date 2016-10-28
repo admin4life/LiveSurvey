@@ -1,6 +1,17 @@
 extends layout
 
+block head
+  link(rel='stylesheet', href="admin.css")
+    
 block content
   .row
-    .col-md-5
-      button.btn.btn-info One
+    .question-container(data-bind="foreach: questions")
+      .col-md-5
+        h1(data-bind="text: head")
+        p(data-bind="text: question")
+        .btn.btn-info.btn-lg(data-bind="click: sendQuestion") Show
+      .col-md-5(data-bind="attr: {id}")
+
+block footscript
+  script(src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.3.0/d3.min.js")
+  script(src="admin.js")
