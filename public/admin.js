@@ -1,13 +1,3 @@
-var source = new EventSource('/adminEvent');
-source.addEventListener('message', function(e) {
-  console.log(e);
-  var data = JSON.parse(e.data);
-  console.log(data);
-  updateChart(did, data)
-  //$('ul').append('<li>' + e.data + ' (message id: ' + e.lastEventId + ')</li>');
-}, false);
-
-
 var vm = {
   questions: ko.observableArray()
 }
@@ -19,12 +9,19 @@ $('document').ready(function(){
   })
 })
 
+var socket = io();
 function sendQuestion(a){
-  $.get('/question/'+a.id, function(res){
-    console.log(a);
-    addChart(a.id);
-  })
+  socket.emit('send-question', a.id);
+  addChart(a.id);
+  console.log(a);
 }
+
+socket.on('chart-vote', vote => {
+  console.log(vote);
+  updateChart(did, vote);
+});
+
+
 
 var did, height, y;
 function addChart(id){

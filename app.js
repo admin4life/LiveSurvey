@@ -1,14 +1,10 @@
 var express = require('express'),
+    app = express(),
+    http = require('http').Server(app),
+    io = require('socket.io')(http),
     pug = require('pug'),
     bodyParser = require('body-parser'),
     events = require('events');
-
-var EventEmitter = events.EventEmitter;
-
-var msger = new EventEmitter;
-var voter = new EventEmitter;
-
-var app = express();
 
 var qs = [
   {id: 'one', head: "Question One", question: "This is a question about UFO's and aliens",
@@ -25,8 +21,7 @@ app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: false}))
 app.use(bodyParser.json())
 
-
-// Routes
+//SocketIO
 
 app.get('/', function(req, res){
   res.render('index');
@@ -36,75 +31,43 @@ app.get('/questions', function(req, res){
   res.json(qs);
 })
 
-var clients = 0;
-
-app.get('/clients', function(req, res) {
-  clients++;
-  console.log(clients+" clients connected to stream");
-
-  // let request last as long as possible
-  req.socket.setTimeout(1200000);
-
-  //send headers for event-stream connection
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  });
-  res.write('\n');
-
-  function eventFunct(data){
-    res.write("data: "+data+"\n\n");
-  }
-
-  msger.on("question", eventFunct);
-
-  //End the clients connection
-  req.on("close", function(){
-    clients--;
-    console.log(clients+" clients connected to stream");
-    msger.removeListener("question", eventFunct)
-  })
-
+app.get('/admin', function(req, res){
+  res.render('admin');
 });
 
-app.get('/admin', function(req,res){
-  res.render('admin');
-})
 
-var votes;
+// Socket IO communication
+var clients = 0
+var votes = [];
+io.on('connection', function(socket){
+  clients++;
+  console.log(clients+' Clients connected');
 
-app.get('/question/:event', function(req,res){
-  msger.emit("question", req.params.event);
-  var ind = qs.findIndex(a => a.id === req.params.event);
-  votes = qs[ind].opts;
-
-  res.writeHead(200, {'Content-Type': 'text/html'});
-
-  res.end();
-})
-
-app.get('/adminEvent', function(req,res){
-  req.socket.setTimeout(1200000);
-
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
+  //show question to clients
+  socket.on('send-question', question => {
+    io.emit('show-question', question);
+    var ind = qs.findIndex(a => a.id === question);
+    votes = qs[ind].opts;
   })
-  res.write('\n');
 
-  voter.on("vote", function(data){
-    var ind = votes.findIndex( a => a.text === data);
+  //get vote from clients
+  socket.on('vote', vote => {
+    var ind = votes.findIndex( a => a.text === vote);
     votes[ind].votes ++;
-    res.write("data: "+JSON.stringify(votes)+"\n\n");
-  })
+    io.emit('chart-vote', votes)
+  });
 
-})
-app.post('/vote', function(req, res){
-  voter.emit("vote", req.body.text);
-  res.send(true);
-})
+  //disconnect
+  socket.on('disconnect', function(){
+    clients--;
+    console.log("Disconnect client, clients: "+clients);
+  });
+});
 
-app.listen(8000);
-console.log("Express server listening on port 8000");
+
+http.listen(3000, function(){
+  console.log("Server Up on 3000");
+});
+
+
+///////
