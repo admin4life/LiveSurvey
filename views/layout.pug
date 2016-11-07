@@ -1,15 +1,22 @@
 html
   head
     meta(name="viewport", content="width=device-width, inital-scale=1")
-    title Votes
+    title Survey
     link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css')
     block head
 
-  body
-    .container
-      block content
+    body
+      .container
+        .header.clearfix
+          nav
+            ul.nav.nav-pills.pull-right
+          .left-head
+            img#logo(src="/logo.png")
+            span.text-muted.title Farm Bill Live Survey
 
-    script(src='https://code.jquery.com/jquery-3.1.1.min.js')
-    script(src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js")
-    script(src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.5.1/socket.io.js")
+        block content
+
+    script(src="jquery-3.1.1.min.js")
+    script(src="knockout-min.js")
+    script(src="socket.io.js")
     block footscript

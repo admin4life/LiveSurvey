@@ -2,3 +2,43 @@ svg: {
   margin-top: 10px;
   padding: 25px;
 }
+#logo {
+  height:6em;
+}
+.title {
+  margin-left: 1em;
+  font-size: 2em;
+  font-weight: bold;
+}
+.left-head{
+  float:left;
+}
+.firstRow {
+  text-align: right;
+  padding-right: 10em !important;
+}
+
+.xaxis {
+  font-size:14pt;
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.yaxis line{
+  stroke-dasharray:2,5;
+}
+
+.c0 {
+  fill: #24408f;
+}
+.c1 {
+  fill: #bc6e2f;
+}
+.c2 {
+  fill:#47ab49;
+}
+.c3 {
+  fill:#ef5e32;
+}
+.c4 {
+  fill:#714697
+}

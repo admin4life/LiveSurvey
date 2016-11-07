@@ -6,16 +6,17 @@ var express = require('express'),
     bodyParser = require('body-parser'),
     events = require('events');
 
-var qs = [
-  {id: 'one', head: "Question One", question: "This is a question about UFO's and aliens",
-  opts: [
-    {text: "Yes", votes: 0},
-    {text: "No", votes: 0}
-  ]},
-
+var qs = require('./questions.json');
+// * Questions need to be in an array in this format
+/*
+[
+  {"id": "one", "head": "Who will win the election?",
+  "opts": [
+    {"text": "Trump", "votes": 0},
+    {"text": "Clinton", "votes": 0}
+  ]}
 ]
-
-
+*/
 app.set('view engine', 'pug');
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: false}))
@@ -65,8 +66,8 @@ io.on('connection', function(socket){
 });
 
 
-http.listen(3000, function(){
-  console.log("Server Up on 3000");
+http.listen(8001, function(){
+  console.log("Server Up on 8001");
 });
 
 

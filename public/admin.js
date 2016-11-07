@@ -10,10 +10,11 @@ $('document').ready(function(){
 })
 
 var socket = io();
+
 function sendQuestion(a){
   socket.emit('send-question', a.id);
-  addChart(a.id);
   console.log(a);
+  addChart(a);
 }
 
 socket.on('chart-vote', vote => {
@@ -24,12 +25,12 @@ socket.on('chart-vote', vote => {
 
 
 var did, height, y;
-function addChart(id){
-  did = id;
-  var opts = ["Yes", "No"];
-  var width = 300;
-  height = 230;
-  var svg = d3.select("#"+id).append('svg')
+function addChart(a){
+  did = a.id;
+  var opts = a.opts.map(v => v.text);
+  var width = document.getElementById(did).offsetWidth;
+  height = window.innerHeight - 100;
+  var svg = d3.select("#"+did).append('svg')
     .attr("width", width)
     .attr("height", height)
     .style('margin-top', "20px")
@@ -50,18 +51,19 @@ function addChart(id){
 
   g.append('g')
     .attr("class", "xaxis")
+    .attr("font-size", "14pt")
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x));
 
   g.append('g')
     .attr("class", "yaxis")
-    .call(d3.axisLeft(y).ticks(10))
+    .call(d3.axisLeft(y).ticks(10).tickSizeInner(-width))
 
   g.selectAll(".bar")
     .data(opts)
     .enter()
     .append("rect")
-    .attr("class", "bar")
+    .attr("class", function(d,i){ return "bar c"+i; })
     .attr("x", function(d){ return x(d); })
     .attr("y", function(d){ return 0; })
     .attr("width", x.bandwidth())
@@ -74,6 +76,8 @@ function updateChart(id,data){
 
   svg.selectAll('.bar')
     .data(data)
+    .transition()
+    .duration(500)
     .attr("y", function(d){ return y(d.votes)})
     .attr("height", function(d){ return height - y(d.votes); });
 }

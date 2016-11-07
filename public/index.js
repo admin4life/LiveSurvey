@@ -1,8 +1,8 @@
-var socket = io();
-
 var vm = {
   questions: ko.observableArray()
 }
+
+var socket = io.connect();
 
 $('document').ready(function(){
   $.get('/questions', function(res){
@@ -11,10 +11,14 @@ $('document').ready(function(){
   })
 })
 
+var el;
+
 socket.on('show-question', question => {
-  $('#'+question).fadeIn('slow');
+  el = $('#'+question);
+  el.fadeIn('slow');
 });
 
 function vote(a,b){
   socket.emit('vote', b.text);
+  el.fadeOut('fast');
 }
